@@ -1,4 +1,5 @@
 import Aircraft from "./classes/Aircraft.js";
+import  randomNoise from "./utils/Noise.js";
 
 const aircraft = new Aircraft(
     // Test positions 
@@ -38,3 +39,13 @@ const intervalId = setInterval(() => {
     console.log("Tracking stopped.");
   }
 }, 1000);
+
+// Simulating 10 random instances of radar noise
+for (let i=0; i<10; i++){
+
+  // Calling randomNoise function
+  const noise = randomNoise(-5,5);
+  
+  // Formatting noise to 3 decimals and logging to console
+  console.log(`Noise: ${noise.toFixed(3)}`);
+}
