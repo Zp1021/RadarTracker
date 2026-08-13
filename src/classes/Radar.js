@@ -15,8 +15,7 @@ export default class Radar {
     measure(aircraft) {
 
         // Store the aircraft's true position before adding sensor error
-        const trueX = aircraft.x;
-        const trueY = aircraft.y;
+        const truePosition = aircraft.getPosition();
 
         // Generate random measurement errors within the radar's accuracy range
         // Example: maxNoise = 5 allows errors between -5 and +5
@@ -24,8 +23,8 @@ export default class Radar {
         const errorY = randomNoise(-this.maxNoise, this.maxNoise);
 
         // Apply measurement error to simulate an imperfect radar reading
-        const measuredX = trueX + errorX;
-        const measuredY = trueY + errorY;
+        const measuredX = truePosition.x + errorX;
+        const measuredY = truePosition.y + errorY;
 
         // Return the radar measurement separately from the aircraft's true position
         return {

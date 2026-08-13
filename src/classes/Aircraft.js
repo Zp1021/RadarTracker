@@ -1,4 +1,4 @@
-export default class Aircraft{
+export default class Aircraft {
 
     // Information for aircraft
     constructor(x, y, vx, vy) {

@@ -1,7 +1,20 @@
 import Aircraft from "./classes/Aircraft.js";
 import Radar from "./classes/Radar.js";
 
-const aircraft = new Aircraft(
+const canvas = document.getElementById("simulationCanvas");
+const ctx = canvas.getContext("2d");
+
+canvas.width = 800;
+canvas.height = 600;
+
+function drawPoint(x, y, color) {
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+}
+
+const aircraft = new Aircraft (
     // Test positions 
     100,
     100,
@@ -31,21 +44,30 @@ const intervalId = setInterval(() => {
 
   // Measure aircraft position using radar
   const measurement = radar.measure(aircraft);
-  const measurementX = measurement.x;
-  const measurementY = measurement.y;
   
+  // Clear the previous frame
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Get actual aircraft positon
+  const actualPosition = aircraft.getPosition();
+
+  // Draw actual aircraft position
+  drawPoint(actualPosition.x, actualPosition.y, "blue");
+
+  // Draw radar measurement
+  drawPoint(measurement.x, measurement.y, "red");
 
   // Log update count and aircraft position
   console.log(`Updated ${count} time(s)`);
 
   // Log Aircrafts position to the console
   console.log("Actual position:");
-  console.log(aircraft.getPosition());
+  console.log(actualPosition);
 
   // Log the radar measurements to the console
   // formatting to 3 decimals
   console.log("Radar measurement:");
-  console.log(`x: ${measurementX.toFixed(3)}, y: ${measurementY.toFixed(3)}`);
+  console.log(`x: ${measurement.x.toFixed(3)}, y: ${measurement.y.toFixed(3)}`);
 
   // If the update count is greater than the tracking limit
   if (count >= maxRuns) {
