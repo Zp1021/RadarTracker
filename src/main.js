@@ -1,5 +1,6 @@
 import Aircraft from "./classes/Aircraft.js";
 import Radar from "./classes/Radar.js";
+import AlphaBetaFilter from "./classes/AlphaBetaFilter.js";
 
 //  Get the simulation canvas and its 2D drawing context
 const canvas = document.getElementById("simulationCanvas");
@@ -41,6 +42,8 @@ function drawTrail(positions, color) {
     ctx.stroke();
 }
 
+// Call the filter function with alpha of .5 and beta of .2
+const filter = new AlphaBetaFilter(0.5, 0.2);
 
 const aircraft = new Aircraft (
     // Test positions 
@@ -68,6 +71,9 @@ const actualPositions = [];
 // Store each noisy radar measurement
 const measurements = [];
 
+// Store the estimates processed by the filter
+const estimates = [];
+
 // Interval function called every 1000 milliseconds
 const intervalId = setInterval(() => {
   
@@ -78,6 +84,24 @@ const intervalId = setInterval(() => {
 
   // Measure aircraft position using radar
   const measurement = radar.measure(aircraft);
+
+  // Provide updated values to the filter function
+  const estimate = filter.update(measurement, dt);
+  
+  // Log the position of the filter estimates
+  console.log(
+    "Estimate (x, y):",
+    estimate.position.x.toFixed(3),
+    estimate.position.y.toFixed(3)
+);
+
+  // Log the velocity of the filter function 
+  console.log(
+    "velocity (x, y):",
+    estimate.velocity.x.toFixed(3),
+    estimate.velocity.y.toFixed(3)
+);
+
   
   // Clear the previous frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -88,6 +112,7 @@ const intervalId = setInterval(() => {
   // Store current positions so their movement can be drawn as trails
   actualPositions.push(actualPosition);
   measurements.push(measurement);
+  estimates.push(estimate.position);
 
   // Draw actual aircraft trail
   drawTrail(actualPositions, "blue");
@@ -95,11 +120,17 @@ const intervalId = setInterval(() => {
   // Draw radar measurement trail
   drawTrail(measurements, "red");
 
+  // Draw estimated filter trail
+  drawTrail(estimates, "green");
+
   // Draw actual aircraft position
   drawPoint(actualPosition.x, actualPosition.y, "blue");
 
   // Draw radar measurement
   drawPoint(measurement.x, measurement.y, "red");
+
+  // Draw filter points by position
+  drawPoint(estimate.position.x, estimate.position.y, "green");
 
   // Log update count and aircraft position
   console.log(`Updated ${count} time(s)`);
