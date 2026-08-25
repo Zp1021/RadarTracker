@@ -1,6 +1,7 @@
 import Aircraft from "./classes/Aircraft.js";
 import Radar from "./classes/Radar.js";
 import AlphaBetaFilter from "./classes/AlphaBetaFilter.js";
+import KalmanFilter from "./classes/KalmanFilter.js";
 
 //  Get the simulation canvas and its 2D drawing context
 const canvas = document.getElementById("simulationCanvas");
@@ -12,45 +13,52 @@ canvas.height = 600;
 
 // Draw a circular point athe the given coordinates
 function drawPoint(x, y, color) {
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x, y, 5, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
 }
 
 // Draw a line connecting a series of recorded positions
 function drawTrail(positions, color) {
 
-    // A trail requires at least two positions
-    if (positions.length < 2) {
-        return;
-    }
+  // A trail requires at least two positions
+  if (positions.length < 2) {
+    return;
+  }
 
-    ctx.beginPath();
+  ctx.beginPath();
 
-    // Start the trail at the first recorded position
-    ctx.moveTo(positions[0].x, positions[0].y);
+  // Start the trail at the first recorded position
+  ctx.moveTo(positions[0].x, positions[0].y);
 
-    // Connect each subsequent position to the previous one
-    for (let i = 1; i < positions.length; i++) {
-        ctx.lineTo(positions[i].x, positions[i].y);
-    }
+  // Connect each subsequent position to the previous one
+  for (let i = 1; i < positions.length; i++) {
+    ctx.lineTo(positions[i].x, positions[i].y);
+  }
 
-    // Set the trail's appearance and draw it
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // Set the trail's appearance and draw it
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
 // Call the filter function with alpha of .5 and beta of .2
 const filter = new AlphaBetaFilter(0.5, 0.2);
 
-const aircraft = new Aircraft (
-    // Test positions 
-    100,
-    100,
-    50,
-    20
+const measurementVariance = (5 ** 2) / 3;
+
+const kalmanX = new KalmanFilter(measurementVariance);
+const kalmanY = new KalmanFilter(measurementVariance);
+
+const aircraft = new Aircraft(
+  // Test positions 
+  100,
+  100,
+
+  // Test velocity
+  50,
+  20
 )
 
 // Create radar sensor with maximum noise of 5 units
@@ -63,7 +71,7 @@ const dt = 1;
 let count = 0;
 
 // Tracking limit
-const maxRuns = 5;
+const maxRuns = 10;
 
 // Store the aircraft's true position at each update
 const actualPositions = [];
@@ -74,10 +82,13 @@ const measurements = [];
 // Store the estimates processed by the filter
 const estimates = [];
 
+// Store the positions estimated by the Kalman filter
+const kalmanEstimates = [];
+
 // Interval function called every 1000 milliseconds
 const intervalId = setInterval(() => {
-  
-  count++;  
+
+  count++;
 
   // Update aircraft position every 1 second
   aircraft.update(dt);
@@ -87,22 +98,39 @@ const intervalId = setInterval(() => {
 
   // Provide updated values to the filter function
   const estimate = filter.update(measurement, dt);
-  
+
   // Log the position of the filter estimates
   console.log(
-    "Estimate (x, y):",
+    "Alpha-Beta Estimate (x, y):",
     estimate.position.x.toFixed(3),
     estimate.position.y.toFixed(3)
-);
+  );
 
   // Log the velocity of the filter function 
   console.log(
-    "velocity (x, y):",
+    "Alpha-Beta velocity (x, y):",
     estimate.velocity.x.toFixed(3),
     estimate.velocity.y.toFixed(3)
-);
+  );
+  // Provide updated values to the kalman filter function
+  const kalmanXEstimate = kalmanX.update(measurement.x);
+  const kalmanYEstimate = kalmanY.update(measurement.y);
 
-  
+  // Combine x and y estimates into one usable position object
+  const kalmanEstimate = {
+    position: {
+      x: kalmanXEstimate,
+      y: kalmanYEstimate
+    }
+  };
+
+  // Log the Kalman position estimate
+  console.log(
+    "Kalman Estimate (x, y):",
+    kalmanEstimate.position.x.toFixed(3),
+    kalmanEstimate.position.y.toFixed(3)
+  );
+
   // Clear the previous frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -113,6 +141,7 @@ const intervalId = setInterval(() => {
   actualPositions.push(actualPosition);
   measurements.push(measurement);
   estimates.push(estimate.position);
+  kalmanEstimates.push(kalmanEstimate.position);
 
   // Draw actual aircraft trail
   drawTrail(actualPositions, "blue");
@@ -123,6 +152,9 @@ const intervalId = setInterval(() => {
   // Draw estimated filter trail
   drawTrail(estimates, "green");
 
+  // Purple = Kalman filter estimate
+  drawTrail(kalmanEstimates, "purple");
+
   // Draw actual aircraft position
   drawPoint(actualPosition.x, actualPosition.y, "blue");
 
@@ -131,6 +163,9 @@ const intervalId = setInterval(() => {
 
   // Draw filter points by position
   drawPoint(estimate.position.x, estimate.position.y, "green");
+
+  // Draw current Kalman filter estimate
+  drawPoint(kalmanEstimate.position.x, kalmanEstimate.position.y, "purple");
 
   // Log update count and aircraft position
   console.log(`Updated ${count} time(s)`);
@@ -148,8 +183,8 @@ const intervalId = setInterval(() => {
   if (count >= maxRuns) {
 
     // Stops the interval
-    clearInterval(intervalId); 
-    
+    clearInterval(intervalId);
+
     //Log to console that tracking has stopped
     console.log("Tracking stopped.");
   }
