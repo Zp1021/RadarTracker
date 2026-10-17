@@ -63,6 +63,8 @@ canvas {
 }
 
 #restart {
+    display: block;
+    margin: auto;
     padding: 8px 20px;
     font-size: 1rem;
     cursor: pointer;
