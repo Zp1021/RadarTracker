@@ -6,8 +6,9 @@ export default class Radar {
 
     // maxNoise defines the maximum possible measurement error
     // in either the x or y direction.
-    constructor(maxNoise) {
+    constructor(maxNoise, random = Math.random) {
         this.maxNoise = maxNoise;
+        this.random = random
     }
 
     // Takes an aircraft object and returns a noisy measurement
@@ -19,8 +20,8 @@ export default class Radar {
 
         // Generate random measurement errors within the radar's accuracy range
         // Example: maxNoise = 5 allows errors between -5 and +5
-        const errorX = randomNoise(-this.maxNoise, this.maxNoise);
-        const errorY = randomNoise(-this.maxNoise, this.maxNoise);
+        const errorX = randomNoise(-this.maxNoise, this.maxNoise, this.random);
+        const errorY = randomNoise(-this.maxNoise, this.maxNoise, this.random);
 
         // Apply measurement error to simulate an imperfect radar reading
         const measuredX = truePosition.x + errorX;

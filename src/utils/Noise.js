@@ -1,7 +1,6 @@
 // Exporting a function that randomizes between a min and max range
-export default function randomNoise(min, max) {
+export default function randomNoise(min, max, random = Math.random) {
 
     // Return random range
-    return Math.random()*(max - min) + min;
-
+    return random() * (max - min) + min;
 }

@@ -43,6 +43,30 @@ function drawTrail(positions, color) {
   ctx.stroke();
 }
 
+// Draw a legend in the bottom-left corner explaining what each color means
+function drawLegend() {
+  const entries = [
+    ["Blue", "Actual aircraft"],
+    ["Red", "Radar measurement"],
+    ["Green", "Alph-beta estimate"],
+    ["Purple", "Kalman estimate"]
+  ];
+
+  ctx.font = "14px sans-serif";
+
+  entries.forEach(([color, label], index) =>{
+    const y = canvas.height - 90 + index * 22;
+    drawPoint(20, y, color);
+    ctx.fillStyle = "#222";
+    ctx.fillText(label, 34, y + 5);
+  });
+}
+
+// Straight-line distance between two positions
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
 // Call the filter function with alpha of .5 and beta of .2
 const filter = new AlphaBetaFilter(0.5, 0.2);
 
@@ -85,6 +109,19 @@ const estimates = [];
 // Store the positions estimated by the Kalman filter
 const kalmanEstimates = [];
 
+// Running totals of how far each one was from the real aircraft
+let radarErrorTotal = 0;
+let alphaBetaErrorTotal = 0;
+let kalmanErrorTotal = 0;
+
+// Page element that shows the average errors under the canvas
+const stats = document.getElementById("stats");
+
+// Reload the page to run the simulation again
+document.getElementById("restart").addEventListener("click", () => {
+  location.reload();
+});
+
 // Interval function called every 1000 milliseconds
 const intervalId = setInterval(() => {
 
@@ -113,8 +150,8 @@ const intervalId = setInterval(() => {
     estimate.velocity.y.toFixed(3)
   );
   // Provide updated values to the kalman filter function
-  const kalmanXEstimate = kalmanX.update(measurement.x);
-  const kalmanYEstimate = kalmanY.update(measurement.y);
+  const kalmanXEstimate = kalmanX.update(measurement.x, dt);
+  const kalmanYEstimate = kalmanY.update(measurement.y, dt);
 
   // Combine x and y estimates into one usable position object
   const kalmanEstimate = {
@@ -166,6 +203,21 @@ const intervalId = setInterval(() => {
 
   // Draw current Kalman filter estimate
   drawPoint(kalmanEstimate.position.x, kalmanEstimate.position.y, "purple");
+
+  // Draw the color legend
+  drawLegend();
+
+  // Add this update's errors to the running totals
+  radarErrorTotal += distance(measurement, actualPosition);
+  alphaBetaErrorTotal += distance(estimate.position, actualPosition);
+  kalmanErrorTotal += distance(kalmanEstimate.position, actualPosition);
+
+  // Show the average error of each one so far (lower is better)
+  stats.textContent = 
+  `Average error after ${count} updates: ` +
+  `Radar ${(radarErrorTotal / count).toFixed(1)} | ` +
+  `Alpha-beta ${(alphaBetaErrorTotal / count).toFixed(1)} | ` +
+  `Kalman ${(kalmanErrorTotal / count).toFixed(1)}`;
 
   // Log update count and aircraft position
   console.log(`Updated ${count} time(s)`);
