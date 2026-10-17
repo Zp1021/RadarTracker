@@ -1,0 +1,11 @@
+{
+    "name": "radartracker",
+    "version": "1.0.0",
+    "description": "Browser simulation comparing an alpha-beta filter and a Kalman filter for radar tracking",
+    "type": "module",
+    "scripts": {
+        "test": "node --test",
+        "validate": "node tests/validate.js"
+    },
+    "license": "MIT"
+}

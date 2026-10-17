@@ -54,7 +54,7 @@ function drawLegend() {
 
   ctx.font = "14px sans-serif";
 
-  entries.forEach(([color, label], index) =>{
+  entries.forEach(([color, label], index) => {
     const y = canvas.height - 90 + index * 22;
     drawPoint(20, y, color);
     ctx.fillStyle = "#222";
@@ -213,11 +213,11 @@ const intervalId = setInterval(() => {
   kalmanErrorTotal += distance(kalmanEstimate.position, actualPosition);
 
   // Show the average error of each one so far (lower is better)
-  stats.textContent = 
-  `Average error after ${count} updates: ` +
-  `Radar ${(radarErrorTotal / count).toFixed(1)} | ` +
-  `Alpha-beta ${(alphaBetaErrorTotal / count).toFixed(1)} | ` +
-  `Kalman ${(kalmanErrorTotal / count).toFixed(1)}`;
+  stats.textContent =
+    `Average error after ${count} updates: ` +
+    `Radar ${(radarErrorTotal / count).toFixed(1)} | ` +
+    `Alpha-beta ${(alphaBetaErrorTotal / count).toFixed(1)} | ` +
+    `Kalman ${(kalmanErrorTotal / count).toFixed(1)}`;
 
   // Log update count and aircraft position
   console.log(`Updated ${count} time(s)`);

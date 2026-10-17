@@ -4,10 +4,10 @@ export default class KalmanFilter {
     constructor(measurementVariance, processNoise = 0) {
         // How noisy the radar is (vaiance of one measurement)
         this.measurementVariance = measurementVariance;
-        
+
         // How much the velocity may change on its own between updates
         this.processNoise = processNoise;
-        
+
         // Estimates are unknown until the first measurement arrives
         this.position = null;
         this.velocity = null;
@@ -49,7 +49,7 @@ export default class KalmanFilter {
         const gainVelocity = pv / innovationVariance;
 
         this.position = predictedPosition + gainPosition * innovation;
-        this.velocity = this.velocity + gainVelocity + innovation;
+        this.velocity = this.velocity + gainVelocity * innovation;
 
         // The uncetainty shrinks becasue the filter now knows more
         this.pp = (1 - gainPosition) * pp
@@ -73,6 +73,7 @@ export default class KalmanFilter {
     nees(truePosition, trueVelocity) {
         const ep = this.position - truePosition;
         const ev = this.velocity - trueVelocity;
+        const det = this.pp * this.vv - this.pv * this.pv;
         return (this.vv * ep * ep - 2 * this.pv * ep * ev + this.pp * ev * ev) / det;
     }
 }
