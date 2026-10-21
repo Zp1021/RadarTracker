@@ -10,6 +10,9 @@ export default class AlphaBetaFilter{
         this.position = null;
         this.velocity = null;
 
+        // Becomes true once a second reading has given a velocity estimate
+        this.velocityReady = false;
+
     }
 
     update(measurement, dt){
@@ -25,8 +28,17 @@ export default class AlphaBetaFilter{
                 x: 0,
                 y: 0
             };
+        } else if (!this.velocityReady) {
+            // Second measurement: estimate velocity from the first two readings
+            // (two-point start) instead of assuming the aircraft is standing still
+            this.velocity = {
+                x: (measurement.x - this.position.x) / dt,
+                y: (measurement.y - this.position.y) / dt
+            };
+            this.position = measurement;
+            this.velocityReady = true;
         } else {
-            // Prediction equation for X and Y based on estiamted position and velocity
+            // Prediction equation for X and Y based on estimated position and velocity
             const predictedX = this.position.x + this.velocity.x * dt;
             const predictedY = this.position.y + this.velocity.y * dt;
 
@@ -34,7 +46,7 @@ export default class AlphaBetaFilter{
             const residualX = measurement.x - predictedX;
             const residualY = measurement.y - predictedY;
 
-            // The alpha determines the degree of postion correction
+            // The alpha determines the degree of position correction
             const positionCorrectionX = this.alpha * residualX;
             const positionCorrectionY = this.alpha * residualY;
 

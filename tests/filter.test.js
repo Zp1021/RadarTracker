@@ -67,3 +67,7 @@ test("Kalman filter is consistent: NEES averages 4 and NIS averages 2", () => {
     assert.ok(Math.abs(results.nees.mean - 4) < 3 * results.nees.standardError + 0.2);
     assert.ok(Math.abs(results.nis.mean - 2) < 3 * results.nis.standardError + 0.1);
 });
+
+test("with a two-point start the alpha-beta filter also beats the raw radar", () => {
+    assert.ok(results.alphaBeta.mean < results.radar.mean);
+});
