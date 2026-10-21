@@ -44,16 +44,19 @@ canvas {
 
     border-radius: 10px;
     
-    width: 800px; 
-    
-    height: 600px;
+    /* Scales down on small screens and keeps the 4:3 shape */
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    aspect-ratio: 4 / 3;
 
     box-shadow: 0px 8px 20px rgba(0,0,0,0.15);
     
 }
 
-#results {
+section {
     margin: 20px 0;
+    padding: 0 16px;
     text-align: center;
 }
 

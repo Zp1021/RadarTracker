@@ -8,7 +8,7 @@ export default class Radar {
     // in either the x or y direction.
     constructor(maxNoise, random = Math.random) {
         this.maxNoise = maxNoise;
-        this.random = random
+        this.random = random;
     }
 
     // Takes an aircraft object and returns a noisy measurement

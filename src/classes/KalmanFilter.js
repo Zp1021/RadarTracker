@@ -2,7 +2,7 @@
 // It estimates two numbers, position and velocity, and keeps track of how unsure it is.
 export default class KalmanFilter {
     constructor(measurementVariance, processNoise = 0) {
-        // How noisy the radar is (vaiance of one measurement)
+        // How noisy the radar is (variance of one measurement)
         this.measurementVariance = measurementVariance;
 
         // How much the velocity may change on its own between updates
@@ -35,7 +35,7 @@ export default class KalmanFilter {
 
         // PREDICT: distance = speed x time, and the uncertainty grows
         const q = this.processNoise;
-        const predictedPosition = this.position + this.velocity * dt
+        const predictedPosition = this.position + this.velocity * dt;
         const pp = this.pp + 2 * dt * this.pv + dt * dt * this.vv + q * dt ** 3 / 3;
         const pv = this.pv + dt * this.vv + q * dt * dt / 2;
         const vv = this.vv + q * dt;
@@ -51,8 +51,8 @@ export default class KalmanFilter {
         this.position = predictedPosition + gainPosition * innovation;
         this.velocity = this.velocity + gainVelocity * innovation;
 
-        // The uncetainty shrinks becasue the filter now knows more
-        this.pp = (1 - gainPosition) * pp
+        // The uncertainty shrinks because the filter now knows more
+        this.pp = (1 - gainPosition) * pp;
         this.pv = (1 - gainPosition) * pv;
         this.vv = vv - gainVelocity * pv;
 
@@ -68,7 +68,7 @@ export default class KalmanFilter {
         return this.lastInnovation ** 2 / this.lastInnovationVariance;
     }
 
-    // Normalized esitmation error squared: is the real error as big as the filter believes?
+    // Normalized estimation error squared: is the real error as big as the filter believes?
     // Needs the true position and velocity, which only a simulation has. (averages 2 per axis)
     nees(truePosition, trueVelocity) {
         const ep = this.position - truePosition;
