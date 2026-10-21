@@ -11,7 +11,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = 800;
 canvas.height = 600;
 
-// Draw a circular point athe the given coordinates
+// Draw a circular point at the given coordinates
 function drawPoint(x, y, color) {
   ctx.beginPath();
   ctx.arc(x, y, 5, 0, Math.PI * 2);
@@ -48,7 +48,7 @@ function drawLegend() {
   const entries = [
     ["Blue", "Actual aircraft"],
     ["Red", "Radar measurement"],
-    ["Green", "Alph-beta estimate"],
+    ["Green", "Alpha-beta estimate"],
     ["Purple", "Kalman estimate"]
   ];
 
@@ -80,10 +80,10 @@ const aircraft = new Aircraft(
   100,
   100,
 
-  // Test velocity
-  50,
-  20
-)
+  // Test velocity (slow enough that 20 updates stay on the canvas)
+  25,
+  10
+);
 
 // Create radar sensor with maximum noise of 5 units
 const radar = new Radar(5);
@@ -94,8 +94,12 @@ const dt = 1;
 // Counting update intervals
 let count = 0;
 
-// Tracking limit
-const maxRuns = 10;
+// Tracking limit (the same 20 updates per flight as the validation report)
+const maxRuns = 20;
+
+// Updates 1 and 2 are start-up (a second reading is needed to know the velocity),
+// so they are left out of the averages, as in the validation report
+const warmUp = 2;
 
 // Store the aircraft's true position at each update
 const actualPositions = [];
@@ -122,7 +126,7 @@ document.getElementById("restart").addEventListener("click", () => {
   location.reload();
 });
 
-// Interval function called every 1000 milliseconds
+// Interval function called every 500 milliseconds (each call is one simulated second)
 const intervalId = setInterval(() => {
 
   count++;
@@ -136,19 +140,6 @@ const intervalId = setInterval(() => {
   // Provide updated values to the filter function
   const estimate = filter.update(measurement, dt);
 
-  // Log the position of the filter estimates
-  console.log(
-    "Alpha-Beta Estimate (x, y):",
-    estimate.position.x.toFixed(3),
-    estimate.position.y.toFixed(3)
-  );
-
-  // Log the velocity of the filter function 
-  console.log(
-    "Alpha-Beta velocity (x, y):",
-    estimate.velocity.x.toFixed(3),
-    estimate.velocity.y.toFixed(3)
-  );
   // Provide updated values to the kalman filter function
   const kalmanXEstimate = kalmanX.update(measurement.x, dt);
   const kalmanYEstimate = kalmanY.update(measurement.y, dt);
@@ -161,17 +152,10 @@ const intervalId = setInterval(() => {
     }
   };
 
-  // Log the Kalman position estimate
-  console.log(
-    "Kalman Estimate (x, y):",
-    kalmanEstimate.position.x.toFixed(3),
-    kalmanEstimate.position.y.toFixed(3)
-  );
-
   // Clear the previous frame
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Get actual aircraft positon
+  // Get actual aircraft position
   const actualPosition = aircraft.getPosition();
 
   // Store current positions so their movement can be drawn as trails
@@ -207,37 +191,27 @@ const intervalId = setInterval(() => {
   // Draw the color legend
   drawLegend();
 
-  // Add this update's errors to the running totals
-  radarErrorTotal += distance(measurement, actualPosition);
-  alphaBetaErrorTotal += distance(estimate.position, actualPosition);
-  kalmanErrorTotal += distance(kalmanEstimate.position, actualPosition);
+  // Add this update's errors to the running totals (after the start-up updates)
+  if (count > warmUp) {
+    radarErrorTotal += distance(measurement, actualPosition);
+    alphaBetaErrorTotal += distance(estimate.position, actualPosition);
+    kalmanErrorTotal += distance(kalmanEstimate.position, actualPosition);
 
-  // Show the average error of each one so far (lower is better)
-  stats.textContent =
-    `Average error after ${count} updates: ` +
-    `Radar ${(radarErrorTotal / count).toFixed(1)} | ` +
-    `Alpha-beta ${(alphaBetaErrorTotal / count).toFixed(1)} | ` +
-    `Kalman ${(kalmanErrorTotal / count).toFixed(1)}`;
-
-  // Log update count and aircraft position
-  console.log(`Updated ${count} time(s)`);
-
-  // Log Aircrafts position to the console
-  console.log("Actual position:");
-  console.log(actualPosition);
-
-  // Log the radar measurements to the console
-  // formatting to 3 decimals
-  console.log("Radar measurement:");
-  console.log(`x: ${measurement.x.toFixed(3)}, y: ${measurement.y.toFixed(3)}`);
+    // Show the average error of each one so far (lower is better)
+    const counted = count - warmUp;
+    stats.textContent =
+      `Average error over ${counted} update${counted === 1 ? "" : "s"}: ` +
+      `Radar ${(radarErrorTotal / counted).toFixed(1)} | ` +
+      `Alpha-beta ${(alphaBetaErrorTotal / counted).toFixed(1)} | ` +
+      `Kalman ${(kalmanErrorTotal / counted).toFixed(1)}`;
+  } else {
+    stats.textContent = "Starting up: the filters need two readings to learn the speed...";
+  }
 
   // If the update count is greater than the tracking limit
   if (count >= maxRuns) {
 
     // Stops the interval
     clearInterval(intervalId);
-
-    //Log to console that tracking has stopped
-    console.log("Tracking stopped.");
   }
-}, 1000);
+}, 500);

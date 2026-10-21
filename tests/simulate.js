@@ -18,7 +18,7 @@ function distance(a, b) {
 
 // One flight with one seed. Returns the average errors and consistency scores after warm-up.
 export function runFlight(seed, steps = 20) {
-    const aircraft = new Aircraft(100, 100, 50, 20);
+    const aircraft = new Aircraft(100, 100, 25, 10);
     const radar = new Radar(MAX_NOISE, seededRandom(seed));
     const alphaBeta = new AlphaBetaFilter(0.5, 0.2);
     const kalmanX = new KalmanFilter(MEASUREMENT_VARIANCE);
